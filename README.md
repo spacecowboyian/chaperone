@@ -1,7 +1,3 @@
-# UNMAINTAINED
-
-This project is no longer being maintained. It's suggested that an alternative be used instead.
-
 # chaperone
 
 > A guided tour for responsive web sites and applications.
