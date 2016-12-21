@@ -2,7 +2,7 @@
 
 > A guided tour for responsive web sites and applications.
 
-We searched the web for a lightweight script that would allow us to provide our users with a simple guided tour of our app. Though there are some pretty nice tours out there we didn't see any that worked really well at any screen size.
+I searched the web for a lightweight script that would allow me to provide users with a simple guided tour of an app. Though there are some pretty nice tours out there I didn't see any that worked really well at any screen size.
 
 Thus was born chaperone.js. In the configuration of your custom tour you can specify what screen sizes each step of the tour should be shown on. If the user opens your app/site on their phone they won't be shown the steps designated only for desktop and vice-versa.
 
@@ -18,7 +18,7 @@ bower install chaperone
 
 ## Browser compatibility
 
-chaperone is meant to be IE8+ compatible. If you find otherwise, please open a new [issue](https://github.com/datuhealth/chaperone/issues/new).
+chaperone is meant to be IE8+ compatible. If you find otherwise, please open a new [issue](https://github.com/spacecowboyian/chaperone/issues/new).
 
 ## Example
 
