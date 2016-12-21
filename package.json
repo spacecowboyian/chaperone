@@ -1,5 +1,5 @@
 {
-  "name": "chaperone",
+  "name": "chaperonejs",
   "version": "1.0.0-beta5",
   "description": "A responsive web tour guide",
   "main": "chaperone.js",

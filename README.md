@@ -9,11 +9,11 @@ Thus was born chaperone.js. In the configuration of your custom tour you can spe
 ## Installation
 
 ```
-npm install chaperone
+npm install chaperonejs
 ```
 
 ```
-bower install chaperone
+bower install chaperonejs
 ```
 
 ## Browser compatibility

@@ -1,9 +1,9 @@
 {
-  "name": "chaperone",
-  "version": "1.0.0-alpha",
-  "homepage": "https://datuhealth.github.io/chaperone/",
+  "name": "chaperonejs",
+  "version": "1.0.0-alpha5",
+  "homepage": "https://spacecowboyian.github.io/chaperone/",
   "authors": [
-    "Ian Jennings <ian.jennings@datuhealth.com>"
+    "Ian Jennings <ian@futurehat.com>"
   ],
   "description": "A responsive webpage tour guide",
   "main": "dist/chaperone.js",
