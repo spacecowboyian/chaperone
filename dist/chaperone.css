@@ -1,0 +1,329 @@
+/**
+ * chaperone default theme
+ * ------------------------------------------------------------------
+ * Sparse, high-contrast theme (black surface, warm gold accent) built
+ * entirely on CSS custom properties so it can be restyled to match any
+ * site just by overriding variables — no need to touch the rules below.
+ *
+ * Example override:
+ *   :root {
+ *     --chaperone-accent: #0ea5e9;
+ *     --chaperone-bg: #ffffff;
+ *     --chaperone-fg: #111111;
+ *   }
+ */
+
+:root {
+    --chaperone-bg: #000000;
+    --chaperone-surface: rgba(255, 255, 255, 0.05);
+    --chaperone-surface-strong: rgba(255, 255, 255, 0.08);
+    --chaperone-border: rgba(255, 255, 255, 0.18);
+    --chaperone-fg: #f4f4f4;
+    --chaperone-fg-muted: rgba(244, 244, 244, 0.6);
+    --chaperone-accent: #ffcc33;
+    --chaperone-accent-fg: #000000;
+    --chaperone-radius: 8px;
+    --chaperone-radius-pill: 999px;
+    --chaperone-font: -apple-system, "system-ui", Inter, "Helvetica Neue", sans-serif;
+    --chaperone-z: 9999;
+    --chaperone-transition: 0.3s;
+    /* Throbbers sit directly on the host page, outside the .chaperone panel,
+       so they get their own sizing/contrast tokens rather than reusing the
+       panel's (deliberately subtler) surface/border variables. */
+    --chaperone-throbber-size: 22px;
+    --chaperone-throbber-ring: rgba(255, 255, 255, 0.5);
+    --chaperone-throbber-core: rgba(255, 255, 255, 0.9);
+}
+
+.chaperone-active {
+    --chaperone-panel-height: 220px;
+}
+
+.chaperone,
+.chaperone *,
+.throbber,
+.throbber * {
+    box-sizing: border-box;
+}
+
+.chaperone {
+    position: fixed;
+    z-index: var(--chaperone-z);
+    bottom: calc(var(--chaperone-panel-height) * -1);
+    left: 0;
+    right: 0;
+    height: var(--chaperone-panel-height);
+    background-color: var(--chaperone-bg);
+    border-top: 1px solid var(--chaperone-border);
+    color: var(--chaperone-fg);
+    font-family: var(--chaperone-font);
+    transition: bottom var(--chaperone-transition) ease;
+}
+
+.chaperone.active {
+    bottom: 0;
+}
+
+.chaperone-active {
+    margin-bottom: var(--chaperone-panel-height);
+}
+
+.chaperone-active.message .throbber {
+    display: none;
+}
+
+.chaperone-active.message .chaperone {
+    background: var(--chaperone-accent);
+    color: var(--chaperone-accent-fg);
+}
+
+.chaperone-active.message .chaperone .chaperone__header,
+.chaperone-active.message .chaperone .chaperone__controls {
+    display: none;
+}
+
+.chaperone-active.message .chaperone .chaperone__body {
+    margin-top: 40px;
+}
+
+.chaperone .chaperone__header,
+.chaperone .chaperone__body,
+.chaperone .chaperone__controls {
+    padding: 0 20px;
+}
+
+.chaperone .chaperone__header .chaperone__title {
+    position: absolute;
+    padding: 16px 0;
+    color: var(--chaperone-accent);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.chaperone .chaperone__header .chaperone__progress {
+    color: var(--chaperone-fg-muted);
+    padding: 16px 0;
+    font-size: 13px;
+    text-align: right;
+}
+
+.chaperone .chaperone__body {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.chaperone .chaperone__controls {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: right;
+    padding: 0;
+    background: var(--chaperone-surface);
+    border-top: 1px solid var(--chaperone-border);
+    backdrop-filter: blur(8px);
+}
+
+.chaperone .chaperone__controls a {
+    cursor: pointer;
+}
+
+.chaperone .close-chaperone {
+    display: block;
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    padding: 14px 15px;
+    text-align: center;
+}
+
+.chaperone .close {
+    position: relative;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    overflow: hidden;
+}
+
+.chaperone .close::before,
+.chaperone .close::after {
+    content: '';
+    position: absolute;
+    height: 2px;
+    width: 100%;
+    top: 50%;
+    left: 0;
+    margin-top: -1px;
+    background: var(--chaperone-fg-muted);
+    transition: background var(--chaperone-transition);
+}
+
+.chaperone .close:hover::before,
+.chaperone .close:hover::after {
+    background: var(--chaperone-accent);
+}
+
+.chaperone .close::before {
+    transform: rotate(45deg);
+}
+
+.chaperone .close::after {
+    transform: rotate(-45deg);
+}
+
+.chaperone .chaperone__controls .chaperone-btn {
+    width: 100px;
+    margin: 0;
+    border-radius: 0;
+    position: relative;
+    display: inline-block;
+    padding: 16px 15px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-align: center;
+    background-color: transparent;
+    color: var(--chaperone-fg);
+    border: none;
+    text-transform: uppercase;
+    transition: color var(--chaperone-transition);
+}
+
+.chaperone .chaperone__controls .chaperone-btn:hover {
+    color: var(--chaperone-accent);
+}
+
+.chaperone .chaperone__controls .chaperone-btn.hide {
+    display: none;
+}
+
+.chaperone .chaperone__controls .chaperone-btn.chaperone-disabled {
+    pointer-events: none;
+    color: var(--chaperone-fg-muted);
+}
+
+.chaperone .chaperone__controls .chaperone-btn:first-of-type {
+    border-right: 1px solid var(--chaperone-border);
+}
+
+.throbber {
+    display: block;
+    position: absolute;
+    z-index: var(--chaperone-z);
+    /* Zero-sized: the JS sets left/top to the exact target point, and the
+       .dot below centers itself on that point with a transform, so sizing
+       the wrapper itself is unnecessary and would only drift out of sync
+       if --chaperone-throbber-size is ever overridden. */
+    width: 0;
+    height: 0;
+    cursor: pointer;
+}
+
+.throbber .dot {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--chaperone-throbber-size);
+    height: var(--chaperone-throbber-size);
+    transform: translate(-50%, -50%) scale(1);
+    border-radius: var(--chaperone-radius-pill);
+    background: var(--chaperone-surface-strong);
+    border: 1.5px solid var(--chaperone-throbber-ring);
+    transition: background var(--chaperone-transition), border-color var(--chaperone-transition),
+        transform var(--chaperone-transition);
+}
+
+.throbber .dot::before {
+    content: '';
+    position: absolute;
+    inset: 30%;
+    border-radius: var(--chaperone-radius-pill);
+    background: var(--chaperone-throbber-core);
+    transition: background var(--chaperone-transition), inset var(--chaperone-transition);
+}
+
+.throbber:hover .dot {
+    transform: translate(-50%, -50%) scale(1.12);
+    border-color: var(--chaperone-fg);
+}
+
+.throbber.active .dot {
+    background: rgba(255, 204, 51, 0.2);
+    border-color: var(--chaperone-accent);
+}
+
+.throbber.active .dot::before {
+    inset: 22%;
+    background: var(--chaperone-accent);
+}
+
+.throbber .dot::after {
+    content: '';
+    position: absolute;
+    inset: -1.5px;
+    border-radius: var(--chaperone-radius-pill);
+    border: 1.5px solid var(--chaperone-throbber-ring);
+    animation: chaperone-throb 2.4s ease-out infinite;
+}
+
+.throbber.active .dot::after {
+    border-color: var(--chaperone-accent);
+    animation-name: chaperone-throb-active;
+}
+
+@keyframes chaperone-throb {
+    0% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(2.2);
+        opacity: 0;
+    }
+}
+
+@keyframes chaperone-throb-active {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(3);
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .throbber .dot::after {
+        animation: none;
+    }
+}
+
+
+@media (min-width: 640px) {
+    .chaperone .chaperone__header,
+    .chaperone .chaperone__body,
+    .chaperone .chaperone__controls__wrapper {
+        width: 60%;
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 0;
+    }
+
+    .chaperone .chaperone__controls__wrapper {
+        position: relative;
+    }
+
+    .chaperone .chaperone__controls .close-chaperone {
+        position: absolute;
+        left: -20px;
+        top: -2px;
+    }
+
+    .chaperone .chaperone__controls .chaperone-btn {
+        right: -30px;
+    }
+}

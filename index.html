@@ -3,20 +3,19 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Chaperone</title>
+    <title>Chaperone — lightweight guided tours</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="dist/chaperone.css">
     <link rel="stylesheet" href="site/css/site.css">
     <link rel="stylesheet" href="site/css/prism.css">
-    <link rel="stylesheet" href="site/css/chaperone.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script type="text/javascript" src="site/js/prism.js"></script>
-    <script type="text/javascript" src="dist/chaperone.js"></script>
 </head>
 
 <body>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><symbol id="x" viewBox="0 0 16 16"><title>x icon</title><path d="M10.276 8.015l5.693 5.704L13.69 16 8 10.296 2.306 16 .03 13.72l5.693-5.705L.03 2.312 2.307.03 8 5.734 13.69.03l2.277 2.282-5.694 5.703z" id="Line" fill-rule="evenodd"/></symbol></svg>
     <header>
-        <button class="c-hamburger c-hamburger--htx" onclick="toggleNav();">
-          <span>toggle menu</span>
+        <button class="c-hamburger" onclick="toggleNav();">
+            <span>toggle menu</span>
         </button>
         <h1 class="logo" data-hook="logo">chaperone</h1>
         <nav>
@@ -28,117 +27,141 @@
         </nav>
     </header>
 
-<div class="container">
-    <section id="what" class="row">
-        <h3 class="tagline">Guided tours for responsive web sites and applications.</h3>
-        <p><button class="button-primary start-tour" data-hook="start-tour" onclick="startTour();">Tour this page!</button></p>
-        <p>I searched the web for a lightweight script that would allow me to provide users with a simple guided tour of a web app. Though there are some pretty nice tours out there I didn't see any that worked really well at any screen size.</p>
-        <p>Thus was born chaperone.js.</p>
-        <ul>
-            <li>Lightweight: 11kb minified</li>
-            <li>Responsive: you name the breakpoints</li>
-            <li>Flexible: bring your own markup</li>
-        </ul>
-    </section>
-    <section id="how" class="row">
-        <h2>Install</h2>
-        <h4>NPM</h4>
-        <pre class="language-javascript"><code>npm install chaperone</code></pre>
-        <h4>Bower</h4>
-        <pre class="language-javascript"><code>bower install chaperone</code></pre>
+    <div class="container">
+        <section id="what" class="row">
+            <h3 class="tagline">Guided tours for responsive web sites and applications.</h3>
+            <p><button class="button-primary start-tour" data-hook="start-tour" onclick="startTour();">Tour this page!</button></p>
+            <p>chaperone.js is a lightweight, dependency-free script for walking users through your app or site, at any screen size. You decide what shows up on mobile vs. desktop.</p>
+            <ul>
+                <li>Lightweight: no runtime dependencies, ships as ESM or a single &lt;script&gt; tag</li>
+                <li>Responsive: you name the breakpoints, steps can be shown/hidden per size</li>
+                <li>Flexible: bring your own markup, or restyle the default theme with CSS variables</li>
+            </ul>
+        </section>
+        <section id="how" class="row">
+            <h2>Install</h2>
+            <pre class="language-javascript"><code>npm install chaperonejs</code></pre>
 
-        <h2 data-hook="usage">Usage</h2>
-        <h4>Create a tour object</h4>
-        <pre class="language-javascript"><code>tour = {
-    // set up your phone and tablet breakpoints, be as generic as possible.
-    // In the future it will except as many as you like and you may name them.. but for now.. just these two wil have to do
+            <h4>As an ES module (bundlers, modern apps)</h4>
+            <pre class="language-javascript"><code>import chaperone from 'chaperonejs';
+import 'chaperonejs/theme.css';
+
+chaperone.init(tour);</code></pre>
+
+            <h4>As a plain &lt;script&gt; tag</h4>
+            <pre class="language-javascript"><code>&lt;link rel="stylesheet" href="node_modules/chaperonejs/dist/chaperone.css"&gt;
+&lt;script src="node_modules/chaperonejs/dist/chaperone.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  chaperone.init(tour);
+&lt;/script&gt;</code></pre>
+
+            <h2 data-hook="usage">Usage</h2>
+            <h4>Create a tour object</h4>
+            <pre class="language-javascript"><code>const tour = {
+    // Name your own breakpoints, generic is best.
     breakpoints: {
-        mobile: 640,
+        mobile: 420,
+        mobileLandscape: 740,
         tablet: 1024
     },
-    // If you want the tour to start as soon as the script is run, change this to true.
+    // Start the tour as soon as init() runs.
     autoStart: false,
-    // If you don't like the standard throbber html you can put yours here
+    // Bring your own markup for the throbber and/or the chaperone bubble.
     throbberHTML: 'your fancy html here',
-    // Again, don't like the standard? Replace it!
     chaperoneHTML: 'more fanciness',
-    // What's the selector in the chaperoneHTML for adding the progress? ( 2 of 5 )
+    // Selectors inside chaperoneHTML, if you replaced it.
     progressSelector: '[data-hook="chaperone-progress"]',
-    // and the text selector for the step message?
     textSelector: '[data-hook="chaperone-text"]',
-    // how about the back button selector?
     backSelector: '[data-hook="chaperone-back"]',
-    // don't forget the next button
     nextSelector: '[data-hook="chaperone-next"]',
-    // and finally the finish button
     finishSelector: '[data-hook="chaperone-finish"]',
-    // how fast should things move?
+    // How fast should things move (ms)?
     animationTime: 300,
-    // do you want it to repeat or just end?
-    cycle: false,
-    // Here's the meat. Add some steps to your tour!
+    // Called once the tour finishes.
+    finishCallback: () =&gt; {},
     steps: [
         {
-            // if there isn't a target selector the default is 'body'
-            target:'[data-hook="nav-what"]',
-            // position can be none( absolute ), locked (absolute to the container of the target) or fixed (fixed to the window)
+            // Defaults to 'body' if there's no target selector.
+            target: '[data-hook="nav-what"]',
+            // 'none' (absolute), 'locked' (absolute to the target's container),
+            // or 'fixed' (fixed to the window).
             position: 'locked',
-            // when locked you can control the distance of the throbber from the target. This one controls the x axis.
+            // When locked, control the throbber's distance from the target.
             lockedLeft: 100,
-            // and this one does the y
             lockedTop: -30,
-            // This next one is required. It's gotta say something!
-            message: 'Well... it's where we tell you what this thing is.',
-            // If you need a callback when the throbber opens
+            // Required: what does this step say?
+            message: 'Well... it\'s where we tell you what this thing is.',
+            // Optional open/close callbacks.
             openEvent: openMenu,
-            // or when it closes
             closeEvent: closeMenu,
-            // here's where you decide what sizes to show this throbber on. It defaults to all of them
-            shownOn: [ 'mobile', 'tablet' ]
-        },
-        {
-          // another step
-        },
-        {
-          // and another
+            // Which breakpoints show this step? Defaults to all of them.
+            shownOn: ['mobile', 'tablet']
         }
     ]
-    }</code></pre>
-    <h4>Lauch that tour!</h4>
-    <pre class="language-javascript"><code>if ( !chaperone.shownSteps ) {
-        chaperone.init( tour );
-    } else {
-        chaperone.placeSteps( chaperone.shownSteps );
-}</code></pre>
-    </section>
-    <section id="who" class="row">
-        <h2 data-hook="responsible">Responsible parties</h2>
-        <p>chaperone is a product of the SCSSC&amp;S design process and was shepherded into existance by <a href="https://github.com/spacecowboyian">Ian</a> with much help from <a href="https://github.com/mike-engel">Mike</a></p>
-    </section>
-</div>
-<footer>
+};</code></pre>
+            <h4>Launch that tour!</h4>
+            <pre class="language-javascript"><code>chaperone.init(tour);</code></pre>
 
-</footer>
-    <script>
+            <h2>Theming</h2>
+            <p>The default theme is a sparse black + gold look, built entirely with CSS custom properties. Override any of them to match your site — nothing else needs to change.</p>
+            <pre class="language-css"><code>:root {
+    --chaperone-bg: #ffffff;
+    --chaperone-fg: #111111;
+    --chaperone-accent: #0ea5e9;
+    --chaperone-radius: 4px;
+}</code></pre>
+        </section>
+        <section id="who" class="row">
+            <h2 data-hook="responsible">Responsible parties</h2>
+            <p>chaperone is a product of the SCSSC&amp;S design process and was shepherded into existance by <a href="https://github.com/spacecowboyian">Ian</a> with much help from <a href="https://github.com/mike-engel">Mike</a></p>
+        </section>
+    </div>
+    <footer></footer>
+    <script type="module">
+        import chaperone from './dist/chaperone.esm.js';
+
+        window.chaperone = chaperone;
+
+        window.toggleNav = function toggleNav() {
+            var header = document.body.querySelector('header'),
+                navSwitch = document.body.querySelector('.c-hamburger');
+
+            if (!header.classList.contains('nav-open')) {
+                header.classList.add('nav-open');
+                navSwitch.classList.add('is-active');
+            } else {
+                header.classList.remove('nav-open');
+                navSwitch.classList.remove('is-active');
+            }
+        };
+
+        window.startTour = function startTour() {
+            if (!chaperone.shownSteps) {
+                chaperone.init(tour);
+            } else {
+                chaperone.placeSteps(chaperone.shownSteps);
+            }
+        };
+
         var tour = {
             steps: [
                 {
-                    target:'[data-hook="logo"]',
+                    target: '[data-hook="logo"]',
                     position: 'fixed',
                     location: 'bottomMiddle',
                     title: 'Let\'s go!',
                     message: 'Look for these glowing "throbbers" all over the page or just use the next and back buttons below. The first stop on our tour is the chaperone logo.'
                 },
                 {
-                    target:'[data-hook="nav"]',
+                    target: '[data-hook="nav"]',
                     position: 'fixed',
                     location: 'bottomMiddle',
                     title: 'Menu',
                     message: 'You click links and new sections scroll in to view. See how its centered on the bottom of the element. That\'s location: "bottomMiddle" at work!',
-                    shownOn: [ 'tablet', 'desktop' ]
+                    shownOn: ['tablet', 'desktop']
                 },
                 {
-                    target:'[data-hook="usage"]',
+                    target: '[data-hook="usage"]',
                     position: 'locked',
                     lockedLeft: -25,
                     lockedTop: -53,
@@ -146,7 +169,7 @@
                     message: 'This is the section where we explain how to implement chaperone. Notice that you were (hopefully) scrolled to this location.'
                 },
                 {
-                    target:'[data-hook="responsible"]',
+                    target: '[data-hook="responsible"]',
                     position: 'locked',
                     lockedLeft: -26,
                     lockedTop: -55,
@@ -154,28 +177,7 @@
                     message: 'The last stop on our tour brings us to the "who-dun-it" section. Note that the "next" button has now changed to "finish". Click that to jump off the tour.'
                 }
             ]
-        }
-
-        function toggleNav() {
-            var header = document.body.querySelector( 'header' ),
-                navSwitch = document.body.querySelector( '.c-hamburger' );
-
-            if ( !header.classList.contains( 'nav-open' )) {
-                header.classList.add( 'nav-open' );
-                navSwitch.classList.add( 'is-active' );
-            } else {
-                header.classList.remove( 'nav-open' );
-                navSwitch.classList.remove( 'is-active' );
-            }
-        }
-
-        function startTour() {
-            if ( !chaperone.shownSteps ) {
-                chaperone.init( tour );
-            } else {
-                chaperone.placeSteps( chaperone.shownSteps );
-            }
-        }
+        };
     </script>
 </body>
 

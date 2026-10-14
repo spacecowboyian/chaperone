@@ -1,745 +1,368 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.chaperone = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
-/* global DocumentTouch */
-
-'use strict';
-
-module.exports = {
-    /**
-     * Setup global options
-     * These can and will be overwriteen if a config object is passed into this.init()
-     */
-    options: {
-        breakpoints: {
-            mobile: 420,
-            mobileLandscape: 740,
-            tablet: 1024
-        },
-        throbberHTML: '<span class="throbber"><span class="dot"></span></span>',
-        chaperoneHTML: '<div class="chaperone"><div class="chaperone__header"><div class="chaperone__tit' +
-                'le" data-hook="chaperone-title"></div><div class="chaperone__progress" data-hook' +
-                '="chaperone-progress">X of X</div></div><div class="chaperone__body" data-hook="' +
-                'chaperone-text"></div><div class="chaperone__controls"><div class="chaperone__co' +
-                'ntrols__wrapper"><a class="close-chaperone" data-hook="close-chaperone"><span cl' +
-                'ass="close thick"></span></a><a class="chaperone-btn" data-hook="chaperone-back"' +
-                '>Back</a><a class="chaperone-btn chaperone-btn--next" data-hook="chaperone-next"' +
-                '>Next</a><a class="chaperone-btn chaperone-btn--finish hide" data-hook="chaperon' +
-                'e-finish">Finish</a></div></div></div>',
-        pageContainerSelector: '',
-        progressSelector: '[data-hook="chaperone-progress"]',
-        textSelector: '[data-hook="chaperone-text"]',
-        backSelector: '[data-hook="chaperone-back"]',
-        nextSelector: '[data-hook="chaperone-next"]',
-        finishSelector: '[data-hook="chaperone-finish"]',
-        finishCallback: function () {
-            return;
-        },
-        animationTime: 300,
-        cycle: false,
-        autoStart: true,
-        steps: [
-            {
-                position: 'fixed',
-                location: 'windowMiddle',
-                title: 'Welcome to Chaperone.',
-                message: 'Add some more steps already!'
-            }
-        ]
-    },
-
-    /**
-     * initializeTour - Initialize function to bind events and set any global data
-     * @version 1.0.0
-     * @example
-     * tour.init();
-     * @param  {object} (config) - Congifuration object that is used to overwrite the defaults in this.options
-     * @return {void}
-     */
-    init: function initializeTour(tour) {
-        var self = this;
-
-        // Check to see if we should use document.body or document.documentElement
-        document.documentElement.scrollTop = 1;
-        this.documentElement = document.documentElement.scrollTop === 1
-            ? document.documentElement
-            : document.body;
-
-        // touch event testing
-        if (('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch) {
-            document.body.style.cursor = 'pointer';
-        }
-
-        // Copy over ininitialization options to options object
-        if (tour instanceof Object) {
-            for (var option in tour) {
-                if (window.Object.hasOwnProperty.call(tour, option) && window.Object.hasOwnProperty.call(this.options, option)) {
-                    // If it's a nested object, loop through that one too
-                    if (typeof tour[option] === 'object' && !Array.isArray(tour[option])) {
-                        for (var subkey in tour[option]) {
-                            if (window.Object.hasOwnProperty.call(tour[option], subkey) && window.Object.hasOwnProperty.call(this.options[option], subkey)) {
-                                this.options[option][subkey] = tour[option][subkey];
-                            }
-                        }
-                    } else {
-                        this.options[option] = tour[option];
-                    }
-                }
-            }
-        }
-
-        // Logic for handling a click event
-        self.clickHandler = function clickHandler(evt) {
-            if (!evt) {
-                evt = window.event;
-            }
-
-            var trigger = evt.target || evt.srcElement,
-                stepId,
-                finishClose;
-
-            // check to see if this is the throbber dot and if it is.. make the trigger the
-            // throbber instead
-            if (self.hasClass(trigger, 'dot') || self.hasClass(trigger, 'close')) {
-                trigger = trigger.parentNode;
-            }
-
-            // set the step ID based on the data-stepid attr
-            stepId = trigger.getAttribute('data-stepid');
-
-            // check if the trigger matches the selector set in the options or the close
-            // button
-            finishClose = trigger.matches(self.options.finishSelector) || trigger.matches('[data-hook="close-chaperone"]');
-
-            // lets do something
-            if (stepId) {
-                if (self.currentStep) {
-                    // if the user is clicking on the throbber for the open step itself...
-                    if (trigger === self.currentStep || trigger === self.currentTrigger) {
-                        return;
-                    } else {
-                        var children = self.currentStep.childNodes;
-
-                        // loop through the child elements in the tooltip to see if one of them has been
-                        // clicked
-                        for (var childNode in children) {
-                            if (window.Object.hasOwnProperty(children, childNode)) {
-                                if (children[childNode] === trigger) {
-                                    return;
-                                }
-                            }
-                        }
-                        self.close();
-                    }
-                }
-                // Store the trigger element
-                self.currentTrigger = trigger;
-
-                // Open the step!
-                setTimeout(function () {
-                    self.open(stepId);
-                }, self.options.animationTime);
-            }
-
-            if (finishClose) {
-                self.endTour();
-            }
-        };
-
-        // place the steps
-        this.placeSteps(self.options.steps);
-
-        // Add the global click handler
-        this.addEventListener(document.body, 'click', self.clickHandler);
-
-        this.windowChangeHandler = function windowChangeHandler() {
-            var stepTextContainer = document
-                    .body
-                    .querySelector(self.options.textSelector),
-                chaperoneActive = document.querySelector('.chaperone-active');
-
-            stepTextContainer.innerText = 'Your window has been resized. The tour is variable based on your screen size, pl' +
-                    'ease refresh your browser then, if necessary, restart the tour.';
-            self.addClass(chaperoneActive, 'message');
-
-            return;
-        };
-
-        // If a throbber is open and the user resizes the page, tour needs to keep up
-        // with the trigger
-        this.addEventListener(window, 'resize', this.windowChangeHandler);
-    },
-    /**
-     * placeSteps - create the throbbers on the page appropriate to the screen size.
-     * @version 1.0.0
-     * @example
-     * this.placeSteps( steps )
-     * @param  [array] (steps) - All of the steps passed in to the init through (tour)
-     * @return {void}
-     */
-    placeSteps: function placeSteps(steps) {
-        var self = this,
-            currentSize = self.getCurrentScreenSize();
-
-        // function to filter the steps down to just what we need for the current sceen
-        // size
-        self.shownSteps = steps.filter(function (step) {
-            var hasCurrentSize;
-
-            if (step.shownOn) {
-                hasCurrentSize = self.arrayContains(step.shownOn, currentSize);
-            } else {
-                hasCurrentSize = true;
-            }
-
-            return hasCurrentSize;
-        });
-
-        self
-            .shownSteps
-            .forEach(function (step, i) {
-                var throbber = self.createDOMElement(self.options.throbberHTML),
-                    target = step.target
-                        ? document
-                            .body
-                            .querySelector(step.target)
-                        : document.body,
-                    location = step.location,
-                    targetPosLeft = self
-                        .getOffset(target)
-                        .left,
-                    targetPosTop = step.position === 'fixed'
-                        ? target.offsetTop
-                        : self
-                            .getOffset(target)
-                            .top,
-                    // targetPosRight = targetPosLeft + target.offsetWidth,
-                    targetPosBottom = targetPosTop + target
-                        .getBoundingClientRect()
-                        .height,
-                    targetPosVertMiddle = targetPosTop + (target.getBoundingClientRect().height / 2),
-                    targetPosCenter = targetPosLeft + (target.getBoundingClientRect().width / 2),
-                    targetZindex = step.zIndex || parseInt(self.getZindex(target)) + 1,
-                    windowPosVertMiddle = window.innerHeight / 2,
-                    windowPosCenter = window.innerWidth / 2;
-
-                self.addClass(self.options.pageContainerSelector
-                    ? document.body.querySelector(self.options.pageContainerSelector)
-                    : document.body, 'chaperone-active');
-
-                // put the stepid/index in an attribute on the throbber
-                throbber.setAttribute('data-stepid', i);
-
-                // handle locked positioning
-                if (step.position === 'locked') {
-                    throbber.style.position = 'absolute';
-                    throbber.style.marginTop = step.lockedTop + 'px';
-                    throbber.style.marginLeft = step.lockedLeft + 'px';
-                } else {
-                    throbber.style.position = step.position || 'absolute';
-                }
-
-                // set the z-index to +1 of the target
-                throbber.style.zIndex = targetZindex;
-
-                // handle different position options
-                switch (location) {
-                    case 'bottomMiddle':
-                        throbber.style.left = targetPosCenter + 'px';
-                        throbber.style.top = targetPosBottom + 'px';
-                        break;
-                    case 'centerMiddle':
-                        throbber.style.left = targetPosCenter + 'px';
-                        throbber.style.top = targetPosVertMiddle + 'px';
-                        break;
-                    case 'windowMiddle':
-                        throbber.style.zIndex = 1000;
-                        throbber.style.left = windowPosCenter + 'px';
-                        throbber.style.top = windowPosVertMiddle + 'px';
-                        break;
-                }
-
-                // Append the throbber based on its desired position
-                if (step.position === 'locked') {
-                    target.insertAdjacentHTML('afterend', throbber.outerHTML);
-                } else {
-                    document
-                        .body
-                        .appendChild(throbber);
-                }
-            });
-
-        if (self.options.autoStart) {
-            self.open(0);
-        }
-    },
-
-    /**
-     * openStep - Main open function to prepare and insert the chaperone with the step loaded
-     * @version 1.0.0
-     * @example
-     * tour.open( 1 );
-     * @param  {number} stepId - The index of the step to be opened
-     * @return {object} - Returns the step object
-     */
-    open: function openStep(stepId) {
-        var self = this,
-            stepIndex = parseInt(stepId),
-            step = self.shownSteps[stepIndex],
-            stepTitle = step.title,
-            stepText = step.message,
-            stepNumber = parseInt(stepIndex + 1),
-            stepsTotal = self.shownSteps.length,
-            currentThrobber = document
-                .body
-                .querySelector('[data-stepid="' + stepId + '"]'),
-            chaperone = self.createDOMElement(self.options.chaperoneHTML),
-            stepTextContainer,
-            chaperoneActive,
-            titleContainer,
-            progressContainer,
-            nextBtn,
-            backBtn,
-            finishBtn,
-            currentElement,
-            targetPosTop,
-            chaperoneHeight;
-
-        // if there is a target to the step, select the element and find its position.
-        if (step.target) {
-            currentElement = document
-                .body
-                .querySelector(step.target);
-            targetPosTop = Math.round(currentElement.offsetTop) - 150;
-        }
-
-        // scroll to the throbber
-        if (step.position !== 'fixed') {
-            self.scrollTo(document.body, targetPosTop, self.options.animationTime);
-        }
-        // activate the throbber
-        self.addClass(currentThrobber, 'active');
-
-        // Insert the html for the chaperone
-        document
-            .body
-            .appendChild(chaperone);
-
-        chaperoneHeight = chaperone.offsetHeight;
-
-        // Show the chaperone
-        setTimeout(function () {
-            // fill vars with elements as they now exist
-            progressContainer = document
-                .body
-                .querySelector(self.options.progressSelector);
-            stepTextContainer = document
-                .body
-                .querySelector(self.options.textSelector);
-            chaperoneActive = document.querySelector('.chaperone-active');
-            titleContainer = document
-                .body
-                .querySelector('[data-hook="chaperone-title"]');
-            nextBtn = document
-                .body
-                .querySelector(self.options.nextSelector);
-            backBtn = document
-                .body
-                .querySelector(self.options.backSelector);
-            finishBtn = document
-                .body
-                .querySelector(self.options.finishSelector);
-            // Place the step progress in the chaperone
-            progressContainer.innerText = stepNumber + ' of ' + stepsTotal;
-            // Place the help text in the chaperone
-            if (stepTitle) {
-                titleContainer.innerText = stepTitle;
-            }
-            stepTextContainer.innerText = stepText;
-            // Set up the buttons
-            nextBtn.setAttribute('data-stepid', parseInt(stepIndex + 1));
-            backBtn.setAttribute('data-stepid', parseInt(stepIndex - 1));
-            // Show the chaperone
-            self.addClass(chaperone, 'active');
-
-            // hide the back button if this is the first step
-            if (stepNumber === 1) {
-                self.addClass(backBtn, 'chaperone-disabled');
-            }
-
-            // if this is the last step then show the finish button instead of the next
-            // button
-            if (stepNumber === stepsTotal) {
-                self.addClass(nextBtn, 'hide');
-                self.removeClass(finishBtn, 'hide');
-            }
-
-            // if there is an openEvent callback then run it
-            if (step.openEvent) {
-                step.openEvent();
-            }
-
-            if (self.getCurrentScreenSize() === 'mobileLandscape') {
-                stepTextContainer.innerText = 'This tour does not fit mobile landscape screens. Please turn your phone vertical' +
-                        ' and refresh the page then, if needed, relaunch the tour.';
-                self.addClass(chaperoneActive, 'message');
-            }
-        }, 10);
-
-        // set the currentStep
-        self.currentStep = stepNumber;
-    },
-
-    /**
-     * closeStep - Main close function to close a specific step
-     * @version 1.0.0
-     * @example
-     * tour.closeStep();
-     * @return {void}
-     */
-    close: function closeStep() {
-        var self = this,
-            currentChaperone = document
-                .body
-                .querySelector('.chaperone'),
-            activeThrobber = document
-                .body
-                .querySelector('.throbber.active'),
-            activeIndex = activeThrobber.getAttribute('data-stepid');
-
-        // deactivate old throbber
-        if (activeThrobber) {
-            self.removeClass(activeThrobber, 'active');
-        }
-        // if there's a closeEvent let's do it
-        if (self.shownSteps[activeIndex].closeEvent) {
-            self
-                .shownSteps[activeIndex]
-                .closeEvent();
-        }
-        // animate the old step out
-        if (currentChaperone) {
-            self.removeClass(currentChaperone, 'active');
-
-            setTimeout(function () {
-                // remove the old step
-                currentChaperone
-                    .parentNode
-                    .removeChild(currentChaperone);
-            }, self.options.animationTime);
-        }
-        self.currentStep = null;
-    },
-
-    endTour: function endTour() {
-        'use strict';
-
-        var self = this,
-            throbbers = Array
-                .prototype
-                .slice
-                .call(document.body.querySelectorAll('.throbber'));
-
-        self.close();
-
-        // Remove all throbbers
-        throbbers.forEach(function (throbber) {
-            throbber
-                .parentNode
-                .removeChild(throbber);
-        });
-
-        //Remove chaperone body/container class
-        self.removeClass(self.options.pageContainerSelector
-            ? document.body.querySelector(self.options.pageContainerSelector)
-            : document.body, 'chaperone-active');
-
-        // Remove event listeners
-        this.removeEventListener(document.body, 'click', self.clickHandler);
-        this.removeEventListener(window, 'resize', self.windowChangeHandler);
-
-        // Remove shownSteps
-        self.shownSteps = null;
-    },
-
-    /**
-     * addEventListener - Small function to add an event listener. Should be compatible with IE8+
-     * @version 1.0.0
-     * @example
-     * this.addEventListener( document.body, 'click', this.open( this.currentTooltip ));
-     * @param  {element} el - The element node that needs to have the event listener added
-     * @param  {string} eventName - The event name (sans the "on")
-     * @param  {function} handler - The function to be run when the event is triggered
-     * @return {element} - The element that had an event bound
-     * @api private
-     */
-    addEventListener: function addEventListener(el, eventName, handler, useCapture) {
-        if (!useCapture) {
-            useCapture = false;
-        }
-
-        if (el.addEventListener) {
-            el.addEventListener(eventName, handler, useCapture);
-
-            return el;
-        } else {
-            if (eventName === 'focus') {
-                eventName = 'focusin';
-            }
-
-            el
-                .attachEvent('on' + eventName, function () {
-                    handler.call(el);
-                });
-
-            return el;
-        }
-    },
-
-    /**
-     * removeEventListener - Small function to remove and event listener. Should be compatible with IE8+
-     * @version 1.0.0
-     * @example
-     * this.removeEventListener( document.body, 'click', this.open( this.currentTooltip ));
-     * @param  {element} el - The element node that needs to have the event listener removed
-     * @param  {string} eventName - The event name (sans the "on")
-     * @param  {function} handler - The function that was to be run when the event is triggered
-     * @return {element} - The element that had an event removed
-     * @api private
-     */
-    removeEventListener: function removeEventListener(el, eventName, handler, useCapture) {
-        if (!useCapture) {
-            useCapture = false;
-        }
-
-        if (!el) {
-            return;
-        }
-
-        if (el.removeEventListener) {
-            el.removeEventListener(eventName, handler, useCapture);
-        } else {
-            if (eventName === 'focus') {
-                eventName = 'focusin';
-            }
-
-            el
-                .detachEvent('on' + eventName, function () {
-                    handler.call(el);
-                });
-        }
-
-        return el;
-    },
-
-    /**
-     * hasClass - Small function to see if an element has a specific class. Should be compatible with IE8+
-     * @version 1.0.0
-     * @example
-     * this.hasClass( this.currentTooltip, 'visible' );
-     * @param  {element} el - The element to check the class existence on
-     * @param  {string} className - The class to check for
-     * @return {boolean} - True or false depending on if the element has the class
-     * @api private
-     */
-    hasClass: function hasClass(el, className) {
-        if (el.classList) {
-            return el
-                .classList
-                .contains(className);
-        } else {
-            return new RegExp('(^| )' + className + '( |$)', 'gi').test(el.className);
-        }
-    },
-
-    /**
-     * addClass - Small function to add a class to an element. Should be compatible with IE8+
-     * @version 1.0.0
-     * @example
-     * this.addClass( this.currentTooltip, 'visible' );
-     * @param  {element} el - The element to add the class to
-     * @param  {string} className - The class name to add to the element
-     * @return {element} - The element that had the class added to it
-     * @api private
-     */
-    addClass: function addClass(el, className) {
-        if (el.classList) {
-            el
-                .classList
-                .add(className);
-        } else {
-            el.className += ' ' + className;
-        }
-
-        return el;
-    },
-
-    /**
-     * removeClass - Small function to remove a class from an element. Should be compatible with IE8+
-     * @version 1.0.0
-     * @example
-     * this.removeClass( this.currentTooltip, 'visible' );
-     * @param  {element} el - The element to remove the class from
-     * @param  {string} className - The class name to remove from the element
-     * @return {element} - The element that had the class removed from it
-     * @api private
-     */
-    removeClass: function removeClass(el, className) {
-        if (el) {
-            if (el.classList) {
-                el
-                    .classList
-                    .remove(className);
-            } else {
-                el.className = el
-                    .className
-                    .replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
-            }
-        }
-
-        return el;
-    },
-
-    /**
-     * setInnerText - Small function to set the inner text of an element. Should be compatible with IE8+
-     * @version 1.0.0
-     * @example
-     * this.setInnerText( this.currentTooltip, 'Hello world' );
-     * @param  {element} el - The element to have the text inserted into
-     * @param  {string} text - The text to insert into the element
-     * @return {element} - The element with the new inner text
-     * @api private
-     */
-    setInnerText: function setInnerText(el, text) {
-        if (el.textContent !== undefined) {
-            el.textcontent = text;
-        } else {
-            el.innerText = text;
-        }
-
-        return el;
-    },
-
-    /**
-     * createDOMElement - Creates a DOM element. Should be compatible with IE8+
-     * @version 1.0.0
-     * @example
-     * this.createDOMElement( '<p>Paragraph!</p>');
-     * @param  {string} html - the string to be converted into a DOM element
-     * @api private
-     */
-    createDOMElement: function createDOMElement(html) {
-        var div = document.createElement('div');
-        div.innerHTML = html;
-
-        return div.firstChild;
-    },
-    /**
-     * getOffset - get the top/left of a DOM Element
-     * @version 1.0.0
-     * @example
-     * this.getOffset( el );
-     * @param  {element} el - the element you need an offset for.
-     * @api private
-     */
-    getOffset: function getOffset(el) {
-        var rect = el.getBoundingClientRect(),
-            scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
-            scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-        return {
-            top: rect.top + scrollTop,
-            left: rect.left + scrollLeft
-        };
-    },
-    /**
-     * getZindex - get the current css z-index of an element
-     * @version 2.0.0
-     * @example
-     * this.getZindex( el );
-     * @param  {element} el - the element for which you need a z-index
-     * @api private
-     */
-    getZindex: function getZindex(el) {
-
-        if (window.getComputedStyle) {
-            var y = document
-                .defaultView
-                .getComputedStyle(el, null)
-                .getPropertyValue('z-index');
-        } else if (el.currentStyle) {
-            var y = el.currentStyle['z-index'];
-        }
-
-        return y;
-    },
-    /**
-     * scrollTo - scroll the screen to a position
-     * @version 1.0.0
-     * @example
-     * this.scrollTo( el, 1000, 300 );
-     * @param  {element} el - the element you want to scroll
-     * @param  {number} to - position (px) you want to scroll to
-     * @param  {number} duration - time (ms) you want to take to animate the scroll
-     * @api private
-     */
-    scrollTo: function scrollTo(element, to, duration) {
-        if (duration < 0) {
-            return;
-        }
-        var difference = to - element.scrollTop,
-            perTick = difference / duration * 10;
-
-        setTimeout(function () {
-            element.scrollTop = element.scrollTop + perTick;
-
-            if (element.scrollTop === to) {
-                return;
-            }
-
-            scrollTo(element, to, duration - 10);
-        }, 10);
-    },
-    /**
-     * arrayContains - see of an array contains something for filtering
-     * @version 1.0.0
-     * @example
-     * this.arrayContains( obj )
-     * @param  {any} obj - the object, string, element or number you are searching for
-     * @api private
-     */
-    arrayContains: function arrayContains(a, obj) {
-        var i = a.length;
-
-        while (i--) {
-            if (a[i] === obj) {
-                return true;
-            }
-        }
-        return false;
-    },
-    /**
-     * getCurrentScreenSize - get the size of the screen based on options set in the tour
-     * @version 1.0.0
-     * @example
-     * this.getCurrentScreenSize()
-     * @api private
-     */
-    getCurrentScreenSize: function getCurrentScreenSize() {
-        var self = this,
-            currentSize;
-
-        if (document.documentElement.clientWidth < self.options.breakpoints.mobile) {
-            currentSize = 'mobile';
-        } else if (document.documentElement.clientWidth < self.options.breakpoints.mobileLandscape && window.innerHeight < window.innerWidth) {
-            currentSize = 'mobileLandscape';
-        } else if (document.documentElement.clientWidth > self.options.breakpoints.mobilePortrait && document.documentElement.clientWidth < self.options.breakpoints.tablet) {
-            currentSize = 'tablet';
-        } else {
-            currentSize = 'desktop';
-        }
-
-        return currentSize;
+var chaperoneModule = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __typeError = (msg) => {
+    throw TypeError(msg);
+  };
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
     }
-};
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+  var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+  var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
 
-},{}]},{},[1])(1)
-});
+  // src/chaperone.js
+  var chaperone_exports = {};
+  __export(chaperone_exports, {
+    Chaperone: () => Chaperone,
+    default: () => chaperone_default
+  });
+  var DEFAULT_OPTIONS = {
+    breakpoints: {
+      mobile: 420,
+      mobileLandscape: 740,
+      tablet: 1024
+    },
+    throbberHTML: '<span class="throbber"><span class="dot"></span></span>',
+    chaperoneHTML: '<div class="chaperone"><div class="chaperone__header"><div class="chaperone__title" data-hook="chaperone-title"></div><div class="chaperone__progress" data-hook="chaperone-progress">X of X</div></div><div class="chaperone__body" data-hook="chaperone-text"></div><div class="chaperone__controls"><div class="chaperone__controls__wrapper"><a class="close-chaperone" data-hook="close-chaperone"><span class="close thick"></span></a><a class="chaperone-btn" data-hook="chaperone-back">Back</a><a class="chaperone-btn chaperone-btn--next" data-hook="chaperone-next">Next</a><a class="chaperone-btn chaperone-btn--finish hide" data-hook="chaperone-finish">Finish</a></div></div></div>',
+    pageContainerSelector: "",
+    progressSelector: '[data-hook="chaperone-progress"]',
+    textSelector: '[data-hook="chaperone-text"]',
+    backSelector: '[data-hook="chaperone-back"]',
+    nextSelector: '[data-hook="chaperone-next"]',
+    finishSelector: '[data-hook="chaperone-finish"]',
+    finishCallback: () => {
+    },
+    animationTime: 300,
+    cycle: false,
+    autoStart: true,
+    zIndex: 9999,
+    steps: [
+      {
+        position: "fixed",
+        location: "windowMiddle",
+        title: "Welcome to Chaperone.",
+        message: "Add some more steps already!"
+      }
+    ]
+  };
+  function mergeOptions(defaults, overrides) {
+    const merged = { ...defaults, breakpoints: { ...defaults.breakpoints } };
+    if (!(overrides instanceof Object)) {
+      return merged;
+    }
+    for (const key of Object.keys(overrides)) {
+      if (!Object.prototype.hasOwnProperty.call(merged, key)) {
+        continue;
+      }
+      const value = overrides[key];
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        merged[key] = { ...merged[key], ...value };
+      } else {
+        merged[key] = value;
+      }
+    }
+    return merged;
+  }
+  var _Chaperone_instances, handleClick_fn, handleWindowChange_fn, createDOMElement_fn, getOffset_fn, getZindex_fn, scrollTo_fn;
+  var Chaperone = class {
+    /**
+     * @param {object} [tour] - initial tour configuration (same shape as init()).
+     */
+    constructor(tour) {
+      __privateAdd(this, _Chaperone_instances);
+      this.options = mergeOptions(DEFAULT_OPTIONS, null);
+      this.shownSteps = null;
+      this.currentStep = null;
+      this.currentTrigger = null;
+      if (tour) {
+        this.init(tour);
+      }
+    }
+    /**
+     * init - initialize a tour: merge config, place steps on the page, and bind events.
+     * @param {object} tour - configuration object that overwrites the defaults in this.options.
+     * @return {Chaperone} this, for chaining.
+     */
+    init(tour) {
+      if (!(tour instanceof Object)) {
+        throw new TypeError("chaperone.init() requires a tour configuration object");
+      }
+      this.options = mergeOptions(DEFAULT_OPTIONS, tour);
+      this.clickHandler = (evt) => __privateMethod(this, _Chaperone_instances, handleClick_fn).call(this, evt);
+      this.windowChangeHandler = () => __privateMethod(this, _Chaperone_instances, handleWindowChange_fn).call(this);
+      this.placeSteps(this.options.steps);
+      document.body.addEventListener("click", this.clickHandler);
+      window.addEventListener("resize", this.windowChangeHandler);
+      return this;
+    }
+    /**
+     * placeSteps - create the throbbers on the page appropriate to the current screen size.
+     * @param {Array<object>} steps - all of the steps passed in to init() via (tour).
+     */
+    placeSteps(steps) {
+      const currentSize = this.getCurrentScreenSize();
+      this.shownSteps = steps.filter((step) => {
+        return step.shownOn ? step.shownOn.includes(currentSize) : true;
+      });
+      this.shownSteps.forEach((step, i) => {
+        const throbber = __privateMethod(this, _Chaperone_instances, createDOMElement_fn).call(this, this.options.throbberHTML);
+        const target = step.target ? document.body.querySelector(step.target) : document.body;
+        const location = step.location;
+        const isFixed = step.position === "fixed";
+        const targetRect = target.getBoundingClientRect();
+        const targetPosLeft = isFixed ? targetRect.left : __privateMethod(this, _Chaperone_instances, getOffset_fn).call(this, target).left;
+        const targetPosTop = isFixed ? targetRect.top : __privateMethod(this, _Chaperone_instances, getOffset_fn).call(this, target).top;
+        const targetPosBottom = targetPosTop + targetRect.height;
+        const targetPosVertMiddle = targetPosTop + targetRect.height / 2;
+        const targetPosCenter = targetPosLeft + targetRect.width / 2;
+        const computedZindex = parseInt(__privateMethod(this, _Chaperone_instances, getZindex_fn).call(this, target), 10);
+        const targetZindex = step.zIndex || (Number.isNaN(computedZindex) ? this.options.zIndex : computedZindex + 1);
+        const windowPosVertMiddle = window.innerHeight / 2;
+        const windowPosCenter = window.innerWidth / 2;
+        const container = this.options.pageContainerSelector ? document.body.querySelector(this.options.pageContainerSelector) : document.body;
+        container.classList.add("chaperone-active");
+        throbber.setAttribute("data-stepid", String(i));
+        if (step.position === "locked") {
+          throbber.style.position = "absolute";
+          throbber.style.marginTop = `${step.lockedTop}px`;
+          throbber.style.marginLeft = `${step.lockedLeft}px`;
+        } else {
+          throbber.style.position = step.position || "absolute";
+        }
+        throbber.style.zIndex = String(targetZindex);
+        switch (location) {
+          case "bottomMiddle":
+            throbber.style.left = `${targetPosCenter}px`;
+            throbber.style.top = `${targetPosBottom}px`;
+            break;
+          case "centerMiddle":
+            throbber.style.left = `${targetPosCenter}px`;
+            throbber.style.top = `${targetPosVertMiddle}px`;
+            break;
+          case "windowMiddle":
+            throbber.style.zIndex = "1000";
+            throbber.style.left = `${windowPosCenter}px`;
+            throbber.style.top = `${windowPosVertMiddle}px`;
+            break;
+          default:
+            break;
+        }
+        if (step.position === "locked") {
+          target.insertAdjacentHTML("afterend", throbber.outerHTML);
+        } else {
+          document.body.appendChild(throbber);
+        }
+      });
+      if (this.options.autoStart) {
+        this.open(0);
+      }
+    }
+    /**
+     * open - open a specific step by index.
+     * @param {number|string} stepId - the index of the step to open.
+     */
+    open(stepId) {
+      const stepIndex = parseInt(stepId, 10);
+      const step = this.shownSteps[stepIndex];
+      const stepTitle = step.title;
+      const stepText = step.message;
+      const stepNumber = stepIndex + 1;
+      const stepsTotal = this.shownSteps.length;
+      const currentThrobber = document.body.querySelector(`[data-stepid="${stepId}"]`);
+      const chaperone2 = __privateMethod(this, _Chaperone_instances, createDOMElement_fn).call(this, this.options.chaperoneHTML);
+      let targetPosTop;
+      if (step.target) {
+        const currentElement = document.body.querySelector(step.target);
+        targetPosTop = Math.round(__privateMethod(this, _Chaperone_instances, getOffset_fn).call(this, currentElement).top) - 150;
+      }
+      if (step.position !== "fixed") {
+        const scrollingElement = document.scrollingElement || document.documentElement;
+        __privateMethod(this, _Chaperone_instances, scrollTo_fn).call(this, scrollingElement, targetPosTop, this.options.animationTime);
+      }
+      if (currentThrobber) {
+        currentThrobber.classList.add("active");
+      }
+      document.body.appendChild(chaperone2);
+      setTimeout(() => {
+        const progressContainer = document.body.querySelector(this.options.progressSelector);
+        const stepTextContainer = document.body.querySelector(this.options.textSelector);
+        const chaperoneActive = document.querySelector(".chaperone-active");
+        const titleContainer = document.body.querySelector('[data-hook="chaperone-title"]');
+        const nextBtn = document.body.querySelector(this.options.nextSelector);
+        const backBtn = document.body.querySelector(this.options.backSelector);
+        const finishBtn = document.body.querySelector(this.options.finishSelector);
+        progressContainer.textContent = `${stepNumber} of ${stepsTotal}`;
+        if (stepTitle) {
+          titleContainer.textContent = stepTitle;
+        }
+        stepTextContainer.textContent = stepText;
+        nextBtn.setAttribute("data-stepid", String(stepIndex + 1));
+        backBtn.setAttribute("data-stepid", String(stepIndex - 1));
+        chaperone2.classList.add("active");
+        if (stepNumber === 1) {
+          backBtn.classList.add("chaperone-disabled");
+        }
+        if (stepNumber === stepsTotal) {
+          nextBtn.classList.add("hide");
+          finishBtn.classList.remove("hide");
+        }
+        if (step.openEvent) {
+          step.openEvent();
+        }
+        if (this.getCurrentScreenSize() === "mobileLandscape") {
+          stepTextContainer.textContent = "This tour does not fit mobile landscape screens. Please turn your phone vertical and refresh the page then, if needed, relaunch the tour.";
+          if (chaperoneActive) {
+            chaperoneActive.classList.add("message");
+          }
+        }
+      }, 10);
+      this.currentStep = stepNumber;
+    }
+    /**
+     * close - close the currently open step's chaperone bubble and throbber.
+     */
+    close() {
+      const currentChaperone = document.body.querySelector(".chaperone");
+      const activeThrobber = document.body.querySelector(".throbber.active");
+      const activeIndex = activeThrobber?.getAttribute("data-stepid");
+      if (activeThrobber) {
+        activeThrobber.classList.remove("active");
+      }
+      if (activeIndex != null && this.shownSteps[activeIndex]?.closeEvent) {
+        this.shownSteps[activeIndex].closeEvent();
+      }
+      if (currentChaperone) {
+        currentChaperone.classList.remove("active");
+        setTimeout(() => {
+          currentChaperone.parentNode?.removeChild(currentChaperone);
+        }, this.options.animationTime);
+      }
+      this.currentStep = null;
+    }
+    /**
+     * endTour - close the tour entirely, removing all throbbers and event listeners.
+     */
+    endTour() {
+      const throbbers = Array.from(document.body.querySelectorAll(".throbber"));
+      this.close();
+      throbbers.forEach((throbber) => throbber.parentNode?.removeChild(throbber));
+      const container = this.options.pageContainerSelector ? document.body.querySelector(this.options.pageContainerSelector) : document.body;
+      container.classList.remove("chaperone-active");
+      document.body.removeEventListener("click", this.clickHandler);
+      window.removeEventListener("resize", this.windowChangeHandler);
+      this.shownSteps = null;
+      this.options.finishCallback();
+    }
+    /**
+     * getCurrentScreenSize - get the named breakpoint ('mobile' | 'mobileLandscape' | 'tablet' | 'desktop')
+     * for the current viewport, based on options.breakpoints.
+     */
+    getCurrentScreenSize() {
+      const width = document.documentElement.clientWidth;
+      const { mobile, mobileLandscape, tablet } = this.options.breakpoints;
+      if (width < mobile) {
+        return "mobile";
+      }
+      if (width < mobileLandscape && window.innerHeight < window.innerWidth) {
+        return "mobileLandscape";
+      }
+      if (width < tablet) {
+        return "tablet";
+      }
+      return "desktop";
+    }
+  };
+  _Chaperone_instances = new WeakSet();
+  handleClick_fn = function(evt) {
+    let trigger = evt.target;
+    if (trigger.classList.contains("dot") || trigger.classList.contains("close")) {
+      trigger = trigger.parentNode;
+    }
+    const stepId = trigger.getAttribute("data-stepid");
+    const finishClose = trigger.matches(this.options.finishSelector) || trigger.matches('[data-hook="close-chaperone"]');
+    if (stepId) {
+      if (this.currentStep) {
+        if (trigger === this.currentStep || trigger === this.currentTrigger) {
+          return;
+        }
+        this.close();
+      }
+      this.currentTrigger = trigger;
+      setTimeout(() => this.open(stepId), this.options.animationTime);
+    }
+    if (finishClose) {
+      this.endTour();
+    }
+  };
+  handleWindowChange_fn = function() {
+    const stepTextContainer = document.body.querySelector(this.options.textSelector);
+    const chaperoneActive = document.querySelector(".chaperone-active");
+    if (stepTextContainer) {
+      stepTextContainer.textContent = "Your window has been resized. The tour is variable based on your screen size, please refresh your browser then, if necessary, restart the tour.";
+    }
+    if (chaperoneActive) {
+      chaperoneActive.classList.add("message");
+    }
+  };
+  createDOMElement_fn = function(html) {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    return div.firstElementChild;
+  };
+  getOffset_fn = function(el) {
+    const rect = el.getBoundingClientRect();
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    return {
+      top: rect.top + scrollTop,
+      left: rect.left + scrollLeft
+    };
+  };
+  getZindex_fn = function(el) {
+    return window.getComputedStyle(el).getPropertyValue("z-index");
+  };
+  /**
+   * #scrollTo - animate an element's scrollTop toward a target position.
+   * Uses a fixed start position + elapsed-time progress ratio (rather than
+   * recursively re-deriving a per-tick delta) so it can't blow up toward
+   * Infinity when the target is clamped by the page's max scroll extent
+   * (e.g. a target near the very bottom of a short page).
+   */
+  scrollTo_fn = function(element, to, duration) {
+    if (Number.isNaN(to)) {
+      return;
+    }
+    if (duration <= 0) {
+      element.scrollTop = to;
+      return;
+    }
+    const start = element.scrollTop;
+    const change = to - start;
+    const startTime = performance.now();
+    const tick = (now) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      element.scrollTop = start + change * progress;
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      }
+    };
+    requestAnimationFrame(tick);
+  };
+  var chaperone = new Chaperone();
+  var chaperone_default = chaperone;
+  return __toCommonJS(chaperone_exports);
+})();
+var chaperone = chaperoneModule.default;
