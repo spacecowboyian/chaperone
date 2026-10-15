@@ -147,14 +147,18 @@ chaperone.init(tour);</code></pre>
             steps: [
                 {
                     target: '[data-hook="logo"]',
-                    position: 'fixed',
+                    position: 'locked',
+                    lockedLeft: 0,
+                    lockedTop: 0,
                     location: 'bottomMiddle',
                     title: 'Let\'s go!',
                     message: 'Look for these glowing "throbbers" all over the page or just use the next and back buttons below. The first stop on our tour is the chaperone logo.'
                 },
                 {
                     target: '[data-hook="nav"]',
-                    position: 'fixed',
+                    position: 'locked',
+                    lockedLeft: 0,
+                    lockedTop: 0,
                     location: 'bottomMiddle',
                     title: 'Menu',
                     message: 'You click links and new sections scroll in to view. See how its centered on the bottom of the element. That\'s location: "bottomMiddle" at work!',
