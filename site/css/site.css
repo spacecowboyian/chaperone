@@ -1,8 +1,23 @@
 /**
  * chaperone demo/docs page styling.
- * Sparse black + gold theme, reusing the library's own --chaperone-* theme
- * variables so the demo doubles as a live example of "match your site" theming.
+ * Sparse black + gold theme for the *host page*, independent of the
+ * library's own --chaperone-* panel/throbber theme tokens below — this is
+ * deliberate: it demonstrates that chaperone's popup panel can carry its
+ * own light look (see theme.css) while sitting on top of any page design,
+ * dark or otherwise, without the two needing to share variables.
  */
+
+:root {
+    --site-bg: #000000;
+    --site-fg: #f4f4f4;
+    --site-fg-muted: rgba(244, 244, 244, 0.6);
+    --site-surface: rgba(255, 255, 255, 0.05);
+    --site-surface-strong: rgba(255, 255, 255, 0.08);
+    --site-border: rgba(255, 255, 255, 0.18);
+    --site-accent: #ffcc33;
+    --site-accent-fg: #000000;
+    --site-radius: 8px;
+}
 
 *,
 *::before,
@@ -16,8 +31,8 @@ html {
 
 body {
     margin: 0;
-    background: var(--chaperone-bg);
-    color: var(--chaperone-fg);
+    background: var(--site-bg);
+    color: var(--site-fg);
     font-family: var(--chaperone-font);
     line-height: 1.6;
 }
@@ -31,7 +46,7 @@ h4 {
 }
 
 a {
-    color: var(--chaperone-accent);
+    color: var(--site-accent);
     text-decoration: none;
 }
 
@@ -45,9 +60,9 @@ pre {
 }
 
 pre {
-    background: var(--chaperone-surface);
-    border: 1px solid var(--chaperone-border);
-    border-radius: var(--chaperone-radius);
+    background: var(--site-surface);
+    border: 1px solid var(--site-border);
+    border-radius: var(--site-radius);
     padding: 16px 20px;
     overflow-x: auto;
     font-size: 14px;
@@ -55,7 +70,7 @@ pre {
 }
 
 code {
-    background: var(--chaperone-surface);
+    background: var(--site-surface);
     border-radius: 4px;
     padding: 0.15em 0.4em;
     font-size: 0.9em;
@@ -75,7 +90,7 @@ pre code {
 
 .row {
     padding: 100px 0 60px;
-    border-bottom: 1px solid var(--chaperone-border);
+    border-bottom: 1px solid var(--site-border);
 }
 
 .row:last-of-type {
@@ -91,7 +106,7 @@ pre code {
 
 .tagline {
     text-align: center;
-    color: var(--chaperone-fg-muted);
+    color: var(--site-fg-muted);
     font-weight: 400;
     margin: 20px 0 0;
 }
@@ -107,10 +122,10 @@ input[type='button'] {
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.02em;
-    color: var(--chaperone-fg);
-    background: var(--chaperone-surface-strong);
-    border: 1px solid var(--chaperone-border);
-    border-radius: var(--chaperone-radius);
+    color: var(--site-fg);
+    background: var(--site-surface-strong);
+    border: 1px solid var(--site-border);
+    border-radius: var(--site-radius);
     padding: 10px 18px;
     cursor: pointer;
     transition: background 0.2s, border-color 0.2s;
@@ -118,17 +133,17 @@ input[type='button'] {
 
 .button:hover,
 button:hover {
-    border-color: var(--chaperone-accent);
+    border-color: var(--site-accent);
 }
 
 .button-primary {
-    background: var(--chaperone-accent);
-    color: var(--chaperone-accent-fg);
+    background: var(--site-accent);
+    color: var(--site-accent-fg);
     border-color: transparent;
 }
 
 .button-primary:hover {
-    background: var(--chaperone-accent);
+    background: var(--site-accent);
     filter: brightness(0.92);
 }
 
@@ -157,14 +172,14 @@ nav ul {
 }
 
 nav a {
-    color: var(--chaperone-fg);
+    color: var(--site-fg);
     text-transform: uppercase;
     font-size: 13px;
     letter-spacing: 0.06em;
 }
 
 nav a:hover {
-    color: var(--chaperone-accent);
+    color: var(--site-accent);
     text-decoration: none;
 }
 
@@ -182,8 +197,8 @@ nav a:hover {
         position: fixed;
         inset: 0 0 0 auto;
         width: 220px;
-        background: var(--chaperone-bg);
-        border-left: 1px solid var(--chaperone-border);
+        background: var(--site-bg);
+        border-left: 1px solid var(--site-border);
         transform: translateX(100%);
         transition: transform 0.3s;
         padding: 80px 20px;
@@ -224,7 +239,7 @@ nav a:hover {
     .c-hamburger span::before,
     .c-hamburger span::after,
     .c-hamburger span {
-        background: var(--chaperone-fg);
+        background: var(--site-fg);
     }
 
     .c-hamburger span::before,
@@ -234,7 +249,7 @@ nav a:hover {
         left: 4px;
         right: 4px;
         height: 2px;
-        background: var(--chaperone-fg);
+        background: var(--site-fg);
         transition: transform 0.3s;
     }
 

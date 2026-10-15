@@ -1,26 +1,30 @@
 /**
  * chaperone default theme
  * ------------------------------------------------------------------
- * Sparse, high-contrast theme (black surface, warm gold accent) built
- * entirely on CSS custom properties so it can be restyled to match any
- * site just by overriding variables — no need to touch the rules below.
+ * Two-tone by design: throbbers sit directly on the host page (dark,
+ * warm-gold markers), while the popup panel itself is intentionally
+ * light, so it reads as a distinct "paper" surface on top of whatever
+ * (typically darker) page it slides up over. Built entirely on CSS
+ * custom properties so it can be restyled to match any site just by
+ * overriding variables — no need to touch the rules below.
  *
  * Example override:
  *   :root {
  *     --chaperone-accent: #0ea5e9;
- *     --chaperone-bg: #ffffff;
- *     --chaperone-fg: #111111;
+ *     --chaperone-bg: #1a1a1a;
+ *     --chaperone-fg: #f4f4f4;
  *   }
  */
 
 :root {
-    --chaperone-bg: #000000;
-    --chaperone-surface: rgba(255, 255, 255, 0.05);
-    --chaperone-surface-strong: rgba(255, 255, 255, 0.08);
-    --chaperone-border: rgba(255, 255, 255, 0.18);
-    --chaperone-fg: #f4f4f4;
-    --chaperone-fg-muted: rgba(244, 244, 244, 0.6);
-    --chaperone-accent: #ffcc33;
+    /* Popup panel surface. Light by default to contrast with a dark page. */
+    --chaperone-bg: #ffffff;
+    --chaperone-surface: rgba(0, 0, 0, 0.04);
+    --chaperone-surface-strong: rgba(0, 0, 0, 0.06);
+    --chaperone-border: rgba(0, 0, 0, 0.12);
+    --chaperone-fg: #161616;
+    --chaperone-fg-muted: rgba(22, 22, 22, 0.55);
+    --chaperone-accent: #ad7c14;
     --chaperone-accent-fg: #000000;
     --chaperone-radius: 8px;
     --chaperone-radius-pill: 999px;
@@ -29,10 +33,12 @@
     --chaperone-transition: 0.3s;
     /* Throbbers sit directly on the host page, outside the .chaperone panel,
        so they get their own sizing/contrast tokens rather than reusing the
-       panel's (deliberately subtler) surface/border variables. */
+       panel's (light) surface/border variables — they stay bright against a
+       dark page regardless of what the panel above looks like. */
     --chaperone-throbber-size: 22px;
     --chaperone-throbber-ring: rgba(255, 255, 255, 0.5);
     --chaperone-throbber-core: rgba(255, 255, 255, 0.9);
+    --chaperone-throbber-fill: rgba(255, 255, 255, 0.08);
 }
 
 .chaperone-active {
@@ -230,7 +236,7 @@
     height: var(--chaperone-throbber-size);
     transform: translate(-50%, -50%) scale(1);
     border-radius: var(--chaperone-radius-pill);
-    background: var(--chaperone-surface-strong);
+    background: var(--chaperone-throbber-fill);
     border: 1.5px solid var(--chaperone-throbber-ring);
     transition: background var(--chaperone-transition), border-color var(--chaperone-transition),
         transform var(--chaperone-transition);
@@ -251,7 +257,7 @@
 }
 
 .throbber.active .dot {
-    background: rgba(255, 204, 51, 0.2);
+    background: rgba(173, 124, 20, 0.2);
     border-color: var(--chaperone-accent);
 }
 
